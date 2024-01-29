@@ -1,0 +1,904 @@
+/* eslint-disable no-dupe-keys */
+import React, { useEffect, useState } from 'react'
+import ActionLayout from '../../../../components/Layout/ActionLayout'
+import Columns from '../../../../components/Layout/Columns'
+import SearchDropDown from '../../../../components/fields/SearchDropDown'
+import InputBox from '../../../../components/fields/inputBox'
+import Service from '../../../../Services/Service'
+import { CatchFunction } from '../../../../components/HandleChanges/CatchFunction'
+import { handleChangeDropDown } from '../../../../components/HandleChanges/HandleChangeDropDown'
+import Utils from '../../../../Utils/Util'
+import PopUp from '../../../../components/popup/Popup'
+import Toastr from '../../../../components/Layout/Toastr'
+import Loader from '../../../../components/Layout/Loader'
+import SearchBar from '../../../../components/fields/searchbar'
+import Tables from '../../../../components/Tables/Tables'
+import columnHeader from './ColumnHeader'
+import ActionBarNew from '../../../../components/Layout/ActionBarNew'
+
+export default function ProjectHoursLimit() {
+  const [loader, setLoader] = useState(false)
+  const [confirmPopup, setConfirmPopup] = useState({
+    open: false,
+    message: "",
+    type: ""
+  })
+
+  const [SavePopup, setSavePopup] = useState({
+    open: false,
+    message: "",
+    type: ""
+  })
+
+
+  const [popup, setPopup] = useState({
+    id: "",
+    open: false,
+    message: "",
+    type: "",
+    actionbar: false,
+    buttonname: ""
+  })
+  const [toaster, setToaster] = useState({
+    status: "",
+    message: "",
+    show: false
+  })
+  const [errorvalues, seterrorvalues] = useState({
+    academicyear: '',
+    institution: '',
+    semestertype: '',
+    teachingcategory: '',
+    hourperclass: '',
+    hourperstaffpersemester: '',
+    hourperstaffperclass: '',
+  })
+
+  const [addnewpopup, setAddNewPopup] = useState({
+    open: false,
+    message: "",
+    type: ""
+  })
+
+  const [errors, setErrors] = useState({})
+  const [isSaveClick, setIsSaveClick] = useState(false);
+  const [academicyearData, setAcademicyeardata] = useState([])
+  const [academicoptions, setAcademicoptions] = useState([])
+  const [ayid, setAyid] = useState({ id: "", name: "" })
+  const [instutionData, setInstutiondata] = useState([])
+  const [institutionoptions, setInstitutionoptions] = useState([])
+  const [instid, setInstid] = useState({ id: "", name: "" })
+  const [semestertypedata, setSemesterTypeData] = useState([])
+  const [semestertypeoptions, setSemestertypeoptions] = useState([])
+  const [semestertypeid, setSemesterTypeid] = useState({ id: "", name: "" })
+  const [teachingcategorydata, setteachingcategoryData] = useState([])
+  const [teachingcategoryoptions, setteachingcategoryoptions] = useState([])
+  const [teachingcategoryid, setteachingcategoryid] = useState({ id: "", name: "" })
+  const [hrperclass, sethrperclass] = useState('')
+  const [hrperstaffpersemester, sethrperstaffpersemester] = useState('')
+  const [hrperstaffperclass, sethrperstaffperclass] = useState('')
+  const [isEdit, setISEdit] = useState(false)
+  const [tableData, setTableData] = useState([]);
+  const [filteredList, setFilteredList] = useState([]);
+  const [editdata, seteditdata] = useState('')
+
+  const [addDataToPop, setAddDataToPop] = useState('')
+
+  console.log(filteredList);
+
+  useEffect(() => {
+    getAcademicyear()
+    getProjectHourslimit()
+    setSemesterTypeData(Utils.getSemesterType)
+    setSemestertypeoptions(Utils.getSemesterType)
+  }, [])
+
+  const getAcademicyear = async () => {
+    setLoader(true)
+    await Service.getAcademicyear()
+      .then(res => {
+        setLoader(false)
+        if (res.status === 200) {
+          setAcademicyeardata(res.data)
+          let val = res.data.map(v => {
+            return { id: v.ayid, name: v.ayname };
+          })
+          setAcademicoptions(val)
+        }
+      })
+      .catch(err => {
+        CatchFunction(err, setPopup, setLoader)
+      })
+  }
+
+  var selectAcademic = []
+  academicyearData.map((v) => {
+    return selectAcademic.push({ id: v.ayid, name: v.ayname });
+  });
+
+  const handleAcademic = async (e, dropdown, data) => {
+    let senddata = {
+      text: { e, dropdown },
+      fulldata: data || selectAcademic, values: { values: errorvalues, name: "academicyear" },
+      setValue: setAyid,
+      clear: async () => {
+        errorvalues.academicyear = ''
+        setAyid({ id: '', name: '' })
+
+      },
+    }
+
+    let academic = await handleChangeDropDown(senddata)
+      .then(async (res) => {
+        setInstid({ id: '', name: '' })
+        setSemesterTypeid({ id: '', name: '' })
+        setteachingcategoryid({ id: '', name: '' })
+
+        let data = await Service.getAllInstitution()
+          .then(v => {
+            let val = v.data.map(v => {
+              return { id: v.instid, name: v.name }
+            })
+            setInstutiondata(v.data)
+            setInstitutionoptions(val)
+            return val
+          })
+          .catch(err => {
+            CatchFunction(err, setPopup, setLoader)
+          })
+        return data
+
+      })
+    if (isSaveClick === true) {
+      setErrors(validation(errorvalues));
+    }
+    console.log(academic);
+    return academic
+  }
+
+  // console.log(Utils.getSemesterType);
+  var selectInstitution = []
+  instutionData.map((v) => {
+    return selectInstitution.push({ id: v.instid, name: v.name });
+  });
+
+  const handleInstitution = async (e, dropdown, data) => {
+    let senddata = {
+      text: { e, dropdown },
+      fulldata: data || selectInstitution, values: { values: errorvalues, name: "institution" },
+      setValue: setInstid,
+      clear: () => {
+        errorvalues.institution = ''
+        setInstid({ id: '', name: '' })
+      },
+    }
+
+
+    let institutiondata = await handleChangeDropDown(senddata)
+      .then(async (response) => {
+        setSemesterTypeid({ id: '', name: '' })
+        setteachingcategoryid({ id: '', name: '' })
+        setSemesterTypeData(Utils.getSemesterType)
+        setSemestertypeoptions(Utils.getSemesterType)
+
+        if (isSaveClick === true) {
+          setErrors(validation(errorvalues));
+        }
+
+        return await Utils.getSemesterType()
+      })
+
+      .catch(err => {
+        CatchFunction(err, setPopup, setLoader)
+      })
+
+    return institutiondata
+  }
+
+  var selectSemesterType = []
+  semestertypedata.map((v) => {
+    return selectSemesterType.push({ id: v.id, name: v.name });
+  });
+
+
+  console.log(selectSemesterType, 'selectSemesterType');
+
+  const getcurriculum = async (instid) => {
+    await Service.getAllCurriculum(sessionStorage.empaid, instid)
+      .then(res => {
+        let val = res.data.map(v => {
+          return { id: v.teachingcategoryid, name: v.description }
+        })
+        setteachingcategoryData(val);
+
+        let findingproject = val.find(v => v.name === "Practical")
+        handleteachingcategory(undefined, findingproject.name, val)
+        setteachingcategoryid(findingproject)
+
+        setteachingcategoryoptions(findingproject)
+
+        // ?
+      })
+      .catch(err => {
+        CatchFunction(err, setPopup, setLoader)
+
+      })
+  }
+
+  const handleSemestertype = async (e, dropdown, data) => {
+    let senddata = {
+      text: { e, dropdown },
+      fulldata: data || selectSemesterType, values: { values: errorvalues, name: "semestertype" },
+      setValue: setSemesterTypeid,
+      clear: () => {
+        errorvalues.semestertype = ''
+        setSemesterTypeid({ id: '', name: '' })
+      },
+    }
+
+    let semester = await handleChangeDropDown(senddata)
+      .then(async (response) => {
+        setteachingcategoryid({ id: '', name: '' })
+
+        if (isSaveClick === true) {
+          setErrors(validation(errorvalues));
+        }
+        // if (instid.id !== "") {
+        getcurriculum(sessionStorage.instid)
+        // }
+      })
+      .catch(err => {
+        CatchFunction(err, setPopup, setLoader)
+      })
+    return semester
+  }
+
+  var selectteachingcategory = []
+  teachingcategorydata.map(v => {
+    return selectteachingcategory.push({ id: v.teachingcategoryid, name: v.description })
+  })
+
+  const handleteachingcategory = (e, dropdown, data) => {
+    let senddata = {
+      text: { e, dropdown },
+      fulldata: data || selectteachingcategory, values: { values: errorvalues, name: "teachingcategory" },
+      setValue: setteachingcategoryid,
+      clear: () => {
+
+        setteachingcategoryid({ id: '', name: '' })
+      },
+    }
+
+    let teachingcategory = handleChangeDropDown(senddata)
+      .then(res => {
+
+        if (isSaveClick === true) {
+          setErrors(validation(errorvalues));
+        }
+      })
+    return teachingcategory
+  }
+
+  const handlehrperclass = ({ value, max }) => {
+    value = isNaN(value) ? '' : value
+
+    if (value !== '') {
+      if (value <= Number(max)) {
+
+        errorvalues.hourperclass = parseInt(value)
+        sethrperclass(parseInt(value))
+      }
+    } else {
+      errorvalues.hourperclass = ''
+      sethrperclass('')
+    }
+
+    errorvalues.hourperstaffpersemester = ''
+    sethrperstaffpersemester('')
+
+    errorvalues.hourperstaffperclass = ''
+    sethrperstaffperclass('')
+
+    if (isSaveClick === true) {
+      setErrors(validation(errorvalues));
+    }
+
+  }
+
+  const handlehrperstaffpersmester = ({ value, max }) => {
+    value = isNaN(value) ? '' : value
+
+    if (value !== '') {
+      if (value <= Number(max)) {
+        errorvalues.hourperstaffpersemester = parseInt(value)
+        sethrperstaffpersemester(parseInt(value))
+      }
+    } else {
+      errorvalues.hourperstaffpersemester = ''
+      sethrperstaffpersemester('')
+    }
+
+    errorvalues.hourperstaffperclass = ''
+    sethrperstaffperclass('')
+
+    if (isSaveClick === true) {
+      setErrors(validation(errorvalues));
+    }
+  }
+
+  const handlehrperstaffperclass = ({ value, max }) => {
+    value = isNaN(value) ? '' : value
+
+    if (value !== '') {
+      if (value <= Number(max)) {
+        errorvalues.hourperstaffperclass = parseInt(value)
+        sethrperstaffperclass(parseInt(value))
+      }
+    } else {
+      errorvalues.hourperstaffperclass = ''
+      sethrperstaffperclass('')
+    }
+    if (isSaveClick === true) {
+      setErrors(validation(errorvalues));
+    }
+  }
+
+
+  const validation = () => {
+    let errors = {}
+    let numeric = /^[0-9]+$/
+
+    if (errorvalues.semestertype === '') {
+      errors.semestertype = "Semestertype is required"
+    }
+    if (errorvalues.teachingcategory === '') {
+      errors.teachingcategory = "Teaching Category is required"
+    }
+
+    if (errorvalues.hourperclass === "") {
+      errors.hourperclass = " Hr.per.class is required"
+    } else if (!numeric.test(errorvalues.hourperclass)) {
+      errors.hourperclass = "Hr.per.class should be Numeric value only Accepted"
+    }
+
+    if (errorvalues.hourperstaffpersemester === "") {
+      errors.hourperstaffpersemester = " Hr.per.staff.per.semester is required"
+    } else if (!numeric.test(errorvalues.hourperstaffpersemester)) {
+      errors.hourperstaffpersemester = "Hr.per.staff.per.semester should be Numeric value only Accepted"
+    } else if (errorvalues.hourperclass < errorvalues.hourperstaffpersemester) {
+      errors.hourperstaffpersemester = "Hr.per.staff.per.semester should not exceed Hours Per class"
+    }
+
+    if (errorvalues.hourperstaffperclass === "") {
+      errors.hourperstaffperclass = " Hr.per.staff.per.class is required"
+    } else if (!numeric.test(errorvalues.hourperstaffperclass)) {
+      errors.hourperstaffperclass = "hr.per.staff.per.class should be Numeric value only Accepted"
+    } else if (errorvalues.hourperstaffpersemester < errorvalues.hourperstaffperclass) {
+      errors.hourperstaffperclass = "Hr.per.staff.per.class should not exceed Hours Per Staff Per Semester"
+    }
+    return errors;
+  }
+
+  const handleEdit = async (e) => {
+    console.log('edit', e);
+    setISEdit(true)
+    seteditdata(e.prohrlimitid)
+
+    setAddNewPopup({ open: true, type: 'info', })
+    let academic = academicyearData.find(v => v.ayid === e.ayid)
+    let instdata = await handleAcademic(undefined, academic.ayname, academicoptions)
+    let institution = instdata.find(v => v.id === e.instid)
+    let semdata = await handleInstitution(undefined, institution.name, instdata)
+    let semester = semdata.find(v => v.id === e.semestertype)
+    await handleSemestertype(undefined, semester.name, semdata)
+    getcurriculum(e.instid)
+    handlehrperclass({ value: e.hrperclass, max: 256 })
+    handlehrperstaffpersmester({ value: e.hrperstaffpersemester, max: 256 })
+    handlehrperstaffperclass({ value: e.hrperstaffpercalss, max: 256 })
+  }
+
+  const handleProjectHourslimitSave = () => {
+    setIsSaveClick(true);
+    var errorVal = validation(errorvalues);
+    setErrors(errorVal);
+    if (Object.keys(errorVal).length === 0) {
+      setSavePopup({ open: true, message: <p>Would you like to {isEdit !== true ? 'Save' : 'Update'} ?</p>, type: "info" })
+    }
+    setToaster({ status: "", message: "", show: false })
+    console.log(setLoader);
+  }
+
+  const handleSavedata = async () => {
+    if (isEdit === false) {
+      const createJson = {
+        aid: sessionStorage.empaid,
+        instid: instid.id,
+        ayid: ayid.id,
+        semestertype: semestertypeid.id,
+        teachingcategoryid: teachingcategoryid.id,
+        hrperclass: hrperclass,
+        hrperstaffpersemester: hrperstaffpersemester,
+        hrperstaffpercalss: hrperstaffperclass,
+        createdby: sessionStorage.email,
+      }
+      setLoader(true)
+      await Service.SaveProjectHoursLimit(createJson)
+        .then(res => {
+          console.log(res.data);
+          if (res.status === 200) {
+            setLoader(false)
+            setISEdit(false)
+            setErrors({})
+
+            setIsSaveClick(false)
+            setInstutiondata([])
+            setInstitutionoptions([])
+            setInstid({ id: "", name: "" })
+            setAcademicoptions([])
+            setAcademicyeardata([])
+            setAyid({ id: "", name: "" })
+            setSemesterTypeData([])
+            setSemestertypeoptions([])
+            setSemesterTypeid({ id: "", name: "" })
+            setteachingcategoryData([])
+            setteachingcategoryoptions([])
+            setteachingcategoryid({ id: "", name: "" })
+            sethrperclass("")
+            sethrperstaffpersemester('')
+            sethrperstaffperclass('')
+            setSavePopup({ open: false, message: "", type: "" })
+            setToaster({ status: "success", message: res?.data, show: true })
+            errorvalues.academicyear = ''
+            errorvalues.institution = ''
+            errorvalues.semestertype = ''
+            errorvalues.teachingcategory = ''
+            errorvalues.hourperclass = ''
+            errorvalues.hourperstaffpersemester = ''
+            errorvalues.hourperstaffperclass = ''
+            getProjectHourslimit()
+            getAcademicyear()
+          }
+        })
+        .catch(err => {
+          getProjectHourslimit()
+          getAcademicyear()
+          errorvalues.academicyear = ''
+          errorvalues.institution = ''
+          errorvalues.semestertype = ''
+          errorvalues.teachingcategory = ''
+          errorvalues.hourperclass = ''
+          errorvalues.hourperstaffpersemester = ''
+          errorvalues.hourperstaffperclass = ''
+          setInstutiondata([])
+          setInstitutionoptions([])
+          setInstid({ id: "", name: "" })
+          setAcademicoptions([])
+          setAcademicyeardata([])
+          setAyid({ id: "", name: "" })
+          setSemesterTypeData([])
+          setSemestertypeoptions([])
+          setSemesterTypeid({ id: "", name: "" })
+          setteachingcategoryData([])
+          setteachingcategoryoptions([])
+          setteachingcategoryid({ id: "", name: "" })
+          sethrperclass("")
+          sethrperstaffpersemester('')
+          sethrperstaffperclass('')
+          setSavePopup({ open: false, message: "", type: "" })
+          setToaster({ status: "", message: "", show: false })
+          CatchFunction(err, setPopup, setLoader)
+        })
+
+    } else {
+      const editJson = {
+        ayid: ayid.id,
+        instid: instid.id,
+        prohrlimitid: editdata,
+        semestertype: semestertypeid.id,
+        teachingcategoryid: teachingcategoryid.id,
+        hrperclass: hrperclass,
+        hrperstaffpersemester: hrperstaffpersemester,
+        hrperstaffpercalss: hrperstaffperclass,
+        createdby: sessionStorage.email,
+        updatedby: sessionStorage.email
+      }
+      setLoader(true)
+      await Service.SaveProjectHoursLimit(editJson)
+        .then(res => {
+          if (res.status === 200) {
+            setLoader(false)
+            setISEdit(false)
+            setErrors({})
+            setSavePopup({ open: false })
+            setIsSaveClick(false)
+            setInstutiondata([])
+            setInstitutionoptions([])
+            setInstid({ id: "", name: "" })
+            setAcademicoptions([])
+            setAcademicyeardata([])
+            setAyid({ id: "", name: "" })
+            setSemesterTypeData([])
+            setSemestertypeoptions([])
+            setSemesterTypeid({ id: "", name: "" })
+            setteachingcategoryData([])
+            setteachingcategoryoptions([])
+            setteachingcategoryid({ id: "", name: "" })
+            sethrperclass("")
+            sethrperstaffpersemester('')
+            sethrperstaffperclass('')
+            errorvalues.academicyear = ''
+            errorvalues.institution = ''
+            errorvalues.semestertype = ''
+            errorvalues.teachingcategory = ''
+            errorvalues.hourperclass = ''
+            errorvalues.hourperstaffpersemester = ''
+            errorvalues.hourperstaffperclass = ''
+
+            setSavePopup({ open: false, message: "", type: "" })
+            setToaster({ status: "success", message: res?.data, show: true })
+
+            getProjectHourslimit()
+            getAcademicyear()
+
+          }
+        })
+        .catch(err => {
+          getProjectHourslimit()
+          getAcademicyear()
+          errorvalues.academicyear = ''
+          errorvalues.institution = ''
+          errorvalues.semestertype = ''
+          errorvalues.teachingcategory = ''
+          errorvalues.hourperclass = ''
+          errorvalues.hourperstaffpersemester = ''
+          errorvalues.hourperstaffperclass = ''
+          setInstutiondata([])
+          setInstitutionoptions([])
+          setInstid({ id: "", name: "" })
+          setAcademicoptions([])
+          setAcademicyeardata([])
+          setAyid({ id: "", name: "" })
+          setSemesterTypeData([])
+          setSemestertypeoptions([])
+          setSemesterTypeid({ id: "", name: "" })
+          setteachingcategoryData([])
+          setteachingcategoryoptions([])
+          setteachingcategoryid({ id: "", name: "" })
+          sethrperclass("")
+          sethrperstaffpersemester('')
+          sethrperstaffperclass('')
+
+          setSavePopup({ open: false, message: "", type: "" })
+          setToaster({ status: "", message: "", show: false })
+          CatchFunction(err, setPopup, setLoader)
+        })
+
+    }
+  }
+
+  const getProjectHourslimit = async () => {
+    setLoader(true)
+    await Service.getProjecthourslimit(sessionStorage.ayid, sessionStorage.instid)
+      .then(res => {
+        console.log(res.data);
+        if (res.status === 200) {
+          setLoader(false)
+          setFilteredList(res.data)
+          setTableData(res.data)
+
+          console.log(res.data);
+        }
+      })
+      .catch(err => {
+        setInstutiondata([])
+        setInstitutionoptions([])
+        setInstid({ id: "", name: "" })
+        setAcademicoptions([])
+        setAcademicyeardata([])
+        setAyid({ id: "", name: "" })
+        setSemesterTypeData([])
+        setSemestertypeoptions([])
+        setSemesterTypeid({ id: "", name: "" })
+        setteachingcategoryData([])
+        setteachingcategoryoptions([])
+        setteachingcategoryid({ id: "", name: "" })
+        sethrperclass("")
+        sethrperstaffpersemester('')
+        sethrperstaffperclass('')
+        setConfirmPopup({ open: false, message: "", type: "" })
+        setToaster({ status: "", message: "", show: false })
+        CatchFunction(err, setPopup, setLoader)
+      })
+  }
+
+
+  const handleDelete = (val) => {
+    setPopup({
+      type: "delete",
+      open: true,
+      message: <p>Would you want to delete this Project Limit Hour ?</p>,
+      actionbar: true,
+      buttonname: "Delete",
+      id: val?.prohrlimitid
+    })
+  }
+
+  const handleDeletedata = async () => {
+    var id = { prohrlimitid: popup.id }
+    setPopup({ type: "", message: "", open: false, buttonname: "", actionbar: false, id: "" })
+    setLoader(true)
+    await Service.deleteprojecthourlimit(id)
+      .then((response) => {
+        if (response.status === 200) {
+          setLoader(false)
+          setInstutiondata([])
+          setInstitutionoptions([])
+          setInstid({ id: "", name: "" })
+          setAcademicoptions([])
+          setAcademicyeardata([])
+          setAyid({ id: "", name: "" })
+          setSemesterTypeData([])
+          setSemestertypeoptions([])
+          setSemesterTypeid({ id: "", name: "" })
+          setteachingcategoryData([])
+          setteachingcategoryoptions([])
+          setteachingcategoryid({ id: "", name: "" })
+          sethrperclass("")
+          sethrperstaffpersemester('')
+          sethrperstaffperclass('')
+          setPopup({ type: "success", message: response.data, open: true, buttonname: "", actionbar: false, id: "" })
+          getProjectHourslimit()
+          getAcademicyear()
+
+        }
+      })
+      .catch(error => {
+        setInstutiondata([])
+        setInstitutionoptions([])
+        setInstid({ id: "", name: "" })
+        setAcademicoptions([])
+        setAcademicyeardata([])
+        setAyid({ id: "", name: "" })
+        setSemesterTypeData([])
+        setSemestertypeoptions([])
+        setSemesterTypeid({ id: "", name: "" })
+        setteachingcategoryData([])
+        setteachingcategoryoptions([])
+        setteachingcategoryid({ id: "", name: "" })
+        sethrperclass("")
+        sethrperstaffpersemester('')
+        sethrperstaffperclass('')
+        CatchFunction(error, setPopup, setLoader)
+      })
+  }
+
+  const toPop = () => {
+    setAddNewPopup({ open: true, type: 'info' })
+  }
+
+  return (
+    <div>
+      <ActionBarNew
+        button={[{
+          name: "Add New",
+          disabled: false,
+          show: true,
+          onClick: (e) => toPop(e)
+        }]} />
+
+      {
+        addnewpopup.open ?
+          <PopUp height={true} width='md' type='info' title='Project Hours Limit' handleClose={() => {
+            setISEdit(false)
+            seteditdata([])
+            setAddNewPopup({
+              open: false,
+              message: '',
+              type: ''
+            })
+          }} actionbar
+            handleSave={() => handleProjectHourslimitSave()}
+          >
+            <ActionLayout>
+              <Columns Columns='2'>
+                <div className='w-full'>
+                  <InputBox label='Academic Year' value={sessionStorage.ayname} disabled />
+                </div>
+                <div>
+                  <InputBox label='Institution' value={sessionStorage.instshortname} disabled />
+                </div>
+                <div className='w-full'>
+                  <SearchDropDown
+                    label="Semester"
+                    required
+                    placeholder="Select Semester"
+                    value={semestertypeid}
+                    offFocus={(e) => setSemesterTypeid(e)}
+                    newData={setSemestertypeoptions}
+                    data={semestertypeoptions}
+                    wholeData={selectSemesterType}
+                    onChange={(e) => handleSemestertype(e, undefined)}
+                    onChoice={(e) => handleSemestertype(undefined, e)}
+                    // disabled={instid.id === '' ? true : false}
+                    clear={() => {
+                      errorvalues.semestertype = ''
+                      setSemesterTypeid({ id: '', name: '' })
+                      errorvalues.teachingcategory = ''
+                      setteachingcategoryid({ id: '', name: '' })
+                      errorvalues.hourperclass = ''
+                      sethrperclass('')
+                      errorvalues.hourperstaffpersemester = ''
+                      sethrperstaffpersemester('')
+                      errorvalues.hourperstaffperclass = ''
+                      sethrperstaffperclass('')
+                    }}
+                  />
+                  {errors.semestertype && <p className='text-sm text-alert-color-text font-semibold'>{errors.semestertype}</p>}
+                </div>
+              </Columns>
+            </ActionLayout>
+            <ActionLayout title='Project Hours Limit' className='mb-5' >
+              <Columns Columns='2'>
+                <div className='w-full'>
+                  {/* <SearchDropDown
+                    label='Teaching Category'
+                    required
+                    placeholder='Select Teaching Category'
+                  /> */}
+                  <SearchDropDown
+                    label="Teaching Category"
+                    required
+                    placeholder="Select Teaching Category"
+                    value={teachingcategoryid}
+                    offFocus={(e) => setteachingcategoryid(e)}
+                    newData={setteachingcategoryoptions}
+                    data={teachingcategoryoptions}
+                    wholeData={selectteachingcategory}
+                    onChange={(e) => handleteachingcategory(e, undefined)}
+                    onChoice={(e) => handleteachingcategory(undefined, e)}
+                    clear={() => {
+                      errorvalues.teachingcategory = ''
+                      setteachingcategoryid({ id: '', name: '' })
+                      errorvalues.hourperclass = ''
+                      sethrperclass('')
+                      errorvalues.hourperstaffpersemester = ''
+                      sethrperstaffpersemester('')
+                      errorvalues.hourperstaffperclass = ''
+                      sethrperstaffperclass('')
+                    }}
+                    disabled={true}
+                  />
+                </div>
+                <div className='w-full '>
+                  <InputBox
+                    label="Hours Per Class "
+                    text="text"
+                    id='Hours Per Class'
+                    required={true}
+                    placeholder='Hours Per Class'
+                    max={256}
+                    min={1}
+                    maxLength={3}
+                    onChange={(e) => handlehrperclass(e.target)}
+                    value={hrperclass}
+                    disabled={teachingcategoryid.id === "" ? true : false}
+                  />
+                  {errors.hourperclass && <p className='text-sm text-alert-color-text font-semibold'>{errors.hourperclass}</p>}
+                </div>
+                <div className='w-full  '>
+                  <InputBox
+                    label="Hours Per Staff Per Semester "
+                    text="text"
+                    id='Hours Per Staff Per Semester'
+                    required={true}
+                    placeholder='Hours Per Staff Per Semester '
+                    maxLength={3}
+                    max={256}
+                    min={1}
+                    onChange={(e) => handlehrperstaffpersmester(e.target)}
+                    value={hrperstaffpersemester}
+                    disabled={hrperclass === '' ? true : false}
+                  />
+                  {errors.hourperstaffpersemester && <p className='text-sm text-alert-color-text font-semibold'>{errors.hourperstaffpersemester}</p>}
+                </div>
+                <div className='w-full  '>
+                  <InputBox
+                    label="Hours Per Staff Per Class"
+                    text="text"
+                    id='Hours Per Staff Per Class'
+                    required={true}
+                    placeholder='Hours Per Staff Per Class'
+                    maxLength={3}
+                    max={256}
+                    min={1}
+                    onChange={(e) => handlehrperstaffperclass(e.target)}
+                    value={hrperstaffperclass}
+                    disabled={hrperstaffpersemester === '' ? true : false}
+                  />
+                  {errors.hourperstaffperclass && <p className='text-sm text-alert-color-text font-semibold'>{errors.hourperstaffperclass}</p>}
+                </div>
+                {/* <div>
+                  <button onClick={handleProjectHourslimitSave}>Click</button>
+                </div> */}
+              </Columns>
+            </ActionLayout>
+
+          </PopUp> : <></>
+      }
+      {loader ? <Loader /> : null}
+      {toaster.show ?
+        <Toastr
+          status={toaster.status}
+          message={toaster.message}
+          setState={setToaster}
+        /> : null}
+      {popup.open ?
+        <PopUp
+          actionbar={popup.actionbar}
+          buttonname={popup.buttonname}
+          type={popup.type}
+          errormessage={popup.message}
+          handleSave={handleDeletedata}
+          handleClose={() => setPopup({
+            open: false,
+            message: "",
+            type: "",
+            actionbar: false,
+            buttonname: ""
+          })} /> : <></>}
+      {SavePopup.open ?
+        <PopUp
+          type="info"
+          actionbar
+          buttonname={isEdit !== true ? "Save" : "Update"}
+          errormessage={SavePopup.message}
+          handleClose={() => setSavePopup({
+            open: false,
+            message: "",
+            type: ""
+          })}
+          handleSave={() => handleSavedata()}
+          title="Save Project Hours Limit"
+        /> : null}
+      {confirmPopup.open ?
+        <PopUp
+          type="info"
+          actionbar
+          buttonname="Delete"
+          errormessage={confirmPopup.message}
+          handleClose={() => setConfirmPopup({
+            open: false,
+            message: "",
+            type: ""
+          })}
+          handleSave={() => handleDeletedata()}
+          title="Delete Project Hours Limit"
+        /> : null}
+      
+        
+      
+      <ActionLayout title='Project Hours Limit'>
+        <div className=' w-[100%] flex justify-end px-3 sm:px-0 sm:pr-3 sm:py-4' >
+          <div className="w-[24%]  md:w-[50%] md:py-4 smmd:py-2 smmd:w-[100%] sm:w-[97.5%] lg:w-[24%]">
+            {/* <SearchBar className="" placeholder="Inst Name / Name / Status"
+                            searchitem={(e) => handleSearch(e.toUpperCase())}
+                            valuesearch={searchvalue}
+                            searchBar={hide}
+                            eventClick={() => cleardata()}
+                        /> */}
+          </div>
+        </div>
+        <div className='py-2'>
+          <Tables
+            header={columnHeader}
+            data={filteredList}
+            edit={true}
+            handleEdit={(e) => handleEdit(e)}
+            handleDelete={(e) => handleDelete(e)}
+          />
+        </div>
+
+      </ActionLayout>
+    </div>
+  )
+}
