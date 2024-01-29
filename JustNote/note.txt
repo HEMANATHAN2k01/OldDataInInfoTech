@@ -1,0 +1,168 @@
+<ActionLayout title='Project Hours Limit Creation'>
+        <Columns Columns='5'>
+          <div className='w-full'>
+            <SearchDropDown
+              label="Academic Year"
+              required
+              placeholder="Select Academic Year"
+              value={ayid}
+              offFocus={(e) => setAyid(e)}
+              newData={setAcademicoptions}
+              data={academicoptions}
+              wholeData={selectAcademic}
+              onChange={(e) => handleAcademic(e, undefined)}
+              onChoice={(e) => handleAcademic(undefined, e)}
+              clear={() => {
+                errorvalues.academicyear = ''
+                setAyid({ id: '', name: '' })
+                errorvalues.institution = ''
+                setInstid({ id: '', name: '' })
+                errorvalues.semestertype = ''
+                setSemesterTypeid({ id: '', name: '' })
+                errorvalues.teachingcategory = ''
+                setteachingcategoryid({ id: '', name: '' })
+                errorvalues.hourperclass = ''
+                sethrperclass('')
+                errorvalues.hourperstaffpersemester = ''
+                sethrperstaffpersemester('')
+                errorvalues.hourperstaffperclass = ''
+                sethrperstaffperclass('')
+              }}
+            />
+            {errors.academicyear && <p className='text-sm text-alert-color-text font-semibold'>{errors.academicyear}</p>}
+          </div>
+          <div className='w-full'>
+            <SearchDropDown
+              label="Institution"
+              required
+              placeholder="Select Institution"
+              value={instid}
+              offFocus={(e) => setInstid(e)}
+              newData={setInstitutionoptions}
+              data={institutionoptions}
+              wholeData={selectInstitution}
+              onChange={(e) => handleInstitution(e, undefined)}
+              onChoice={(e) => handleInstitution(undefined, e)}
+              disabled={ayid.id === "" ? true : false}
+              clear={() => {
+                errorvalues.institution = ''
+                setInstid({ id: '', name: '' })
+                errorvalues.semestertype = ''
+                setSemesterTypeid({ id: '', name: '' })
+                errorvalues.teachingcategory = ''
+                setteachingcategoryid({ id: '', name: '' })
+                errorvalues.hourperclass = ''
+                sethrperclass('')
+                errorvalues.hourperstaffpersemester = ''
+                sethrperstaffpersemester('')
+                errorvalues.hourperstaffperclass = ''
+                sethrperstaffperclass('')
+              }}
+            />
+            {errors.institution && <p className='text-sm text-alert-color-text font-semibold'>{errors.institution}</p>}
+          </div>
+          <div className='w-full'>
+            <SearchDropDown
+              label="Semester"
+              required
+              placeholder="Select Semester"
+              value={semestertypeid}
+              offFocus={(e) => setSemesterTypeid(e)}
+              newData={setSemestertypeoptions}
+              data={semestertypeoptions}
+              wholeData={selectSemesterType}
+              onChange={(e) => handleSemestertype(e, undefined)}
+              onChoice={(e) => handleSemestertype(undefined, e)}
+              disabled={instid.id === '' ? true : false}
+              clear={() => {
+                errorvalues.semestertype = ''
+                setSemesterTypeid({ id: '', name: '' })
+                errorvalues.teachingcategory = ''
+                setteachingcategoryid({ id: '', name: '' })
+                errorvalues.hourperclass = ''
+                sethrperclass('')
+                errorvalues.hourperstaffpersemester = ''
+                sethrperstaffpersemester('')
+                errorvalues.hourperstaffperclass = ''
+                sethrperstaffperclass('')
+              }}
+            />
+            {errors.semestertype && <p className='text-sm text-alert-color-text font-semibold'>{errors.semestertype}</p>}
+          </div>
+          <div className='w-full'>
+            <SearchDropDown
+              label="Teaching Category"
+              required
+              placeholder="Select Teaching Category"
+              value={teachingcategoryid}
+              offFocus={(e) => setteachingcategoryid(e)}
+              newData={setteachingcategoryoptions}
+              data={teachingcategoryoptions}
+              wholeData={selectteachingcategory}
+              onChange={(e) => handleteachingcategory(e, undefined)}
+              onChoice={(e) => handleteachingcategory(undefined, e)}
+              clear={() => {
+                errorvalues.teachingcategory = ''
+                setteachingcategoryid({ id: '', name: '' })
+                errorvalues.hourperclass = ''
+                sethrperclass('')
+                errorvalues.hourperstaffpersemester = ''
+                sethrperstaffpersemester('')
+                errorvalues.hourperstaffperclass = ''
+                sethrperstaffperclass('')
+              }}
+              disabled={true}
+            />
+            {errors.teachingcategory && <p className='text-sm text-alert-color-text font-semibold'>{errors.teachingcategory}</p>}
+          </div>
+          <div className='w-full '>
+            <InputBox
+              label="Hours Per Class "
+              text="text"
+              id='Hours Per Class'
+              required={true}
+              placeholder='Hours Per Class'
+              max={256}
+              min={1}
+              maxLength={3}
+              onChange={(e) => handlehrperclass(e.target)}
+              value={hrperclass}
+              disabled={teachingcategoryid.id === "" ? true : false}
+            />
+            {errors.hourperclass && <p className='text-sm text-alert-color-text font-semibold'>{errors.hourperclass}</p>}
+          </div>
+          <div className='w-full  '>
+            <InputBox
+              label="Hours Per Staff Per Semester "
+              text="text"
+              id='Hours Per Staff Per Semester'
+              required={true}
+              placeholder='Hours Per Staff Per Semester '
+              maxLength={3}
+              max={256}
+              min={1}
+              onChange={(e) => handlehrperstaffpersmester(e.target)}
+              value={hrperstaffpersemester}
+              disabled={hrperclass === '' ? true : false}
+            />
+            {errors.hourperstaffpersemester && <p className='text-sm text-alert-color-text font-semibold'>{errors.hourperstaffpersemester}</p>}
+          </div>
+          <div className='w-full  '>
+            <InputBox
+              label="Hours Per Staff Per Class"
+              text="text"
+              id='Hours Per Staff Per Class'
+              required={true}
+              placeholder='Hours Per Staff Per Class'
+              maxLength={3}
+              max={256}
+              min={1}
+              onChange={(e) => handlehrperstaffperclass(e.target)}
+              value={hrperstaffperclass}
+              disabled={hrperstaffpersemester === '' ? true : false}
+            />
+            {errors.hourperstaffperclass && <p className='text-sm text-alert-color-text font-semibold'>{errors.hourperstaffperclass}</p>}
+          </div>
+
+        </Columns>
+      </ActionLayout>
